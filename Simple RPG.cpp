@@ -50,7 +50,8 @@ void Initial() {
 void Loop() {
     WCHAR buf[800] = {};
     DWORD bits(0);
-    WriteConsoleOutputCharacter(outputHandle.stdOutput, buf, 800,COORD({0,0}), &bits);
+    ReadConsoleOutputCharacter(outputHandle.stdOutput, buf, 800, COORD({ 0,0 }), &bits);
+    WriteConsoleOutputCharacter(outputHandle.bufferOutput, buf, 800,COORD({0,0}), &bits);
 }
 
 
