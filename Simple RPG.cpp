@@ -9,7 +9,7 @@ struct Hud {
 Hud outputHandle;
 
 struct ConsoleSize {
-    int row, column;
+    DWORD row, column;
 };
 
 ConsoleSize consoleSize;
@@ -19,7 +19,7 @@ void Initial() {
     // 初始化标准显示缓冲区句柄和buffer缓冲区
     outputHandle.stdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
     outputHandle.bufferOutput = CreateConsoleScreenBuffer(
-        GENERIC_ALL,    //控制台缓冲安全与访问权限：读写
+        GENERIC_READ | GENERIC_WRITE,    //控制台缓冲安全与访问权限：读写
         FILE_SHARE_READ|FILE_SHARE_WRITE,   //共享模式：读写共享
         NULL,   //安全属性
         CONSOLE_TEXTMODE_BUFFER,    //缓冲区类型:控制台文本模式缓冲
@@ -40,17 +40,17 @@ void Initial() {
     consoleSize.column = srWindow.Bottom - srWindow.Top + 1;
 
     printf("WindowSize: row: %d, column: %d \n", consoleSize.row,consoleSize.column);
+
+    // 使用这个当ActiveScreenBuffer,因为输入输出操作的都是stdOutput
+    SetConsoleActiveScreenBuffer(outputHandle.bufferOutput);
+    system("pause");
 }
 
 //游戏循环
 void Loop() {
-    CONSOLE_SCREEN_BUFFER_INFO stdConsoleInfo;
-    GetConsoleScreenBufferInfo(outputHandle.stdOutput, &stdConsoleInfo);
-    SMALL_RECT srWindow = stdConsoleInfo.srWindow;
-    consoleSize.row = srWindow.Right - srWindow.Left + 1;
-    consoleSize.column = srWindow.Bottom - srWindow.Top + 1;
-
-    printf("WindowSize: row: %d, column: %d \n", consoleSize.row, consoleSize.column);
+    WCHAR buf[800] = {};
+    DWORD bits(0);
+    WriteConsoleOutputCharacter(outputHandle.stdOutput, buf, 800,COORD({0,0}), &bits);
 }
 
 
