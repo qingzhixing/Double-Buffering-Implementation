@@ -15,15 +15,41 @@ struct ConsoleSize {
 ConsoleSize consoleSize;
 
 void UpdateConsoleSize() {
-    CONSOLE_SCREEN_BUFFER_INFO stdConsoleInfo;
-    GetConsoleScreenBufferInfo(outputHandle.stdOutput, &stdConsoleInfo);
-    SMALL_RECT srWindow = stdConsoleInfo.srWindow;
+    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+    GetConsoleScreenBufferInfo(outputHandle.bufferOutput, &consoleInfo);
+    SMALL_RECT srWindow = consoleInfo.srWindow;
     consoleSize.row = srWindow.Right - srWindow.Left + 1;
     consoleSize.column = srWindow.Bottom - srWindow.Top + 1;
+
+    //TODO:同步控制台属性
+    PCONSOLE_SCREEN_BUFFER_INFOEX exInfo=new CONSOLE_SCREEN_BUFFER_INFOEX({});
+    if (!GetConsoleScreenBufferInfoEx(outputHandle.bufferOutput, exInfo)) {
+        std::cout << GetLastError() << std::endl;
+    }
+    printf("exInfo: srWindow.Top: %d\n", exInfo->srWindow.Top);
+    if (!SetConsoleScreenBufferInfoEx(outputHandle.stdOutput, exInfo)) {
+        std::cout << GetLastError() << std::endl;
+    }
 }
 
-void ClearScreen(HANDLE hConsole)
+const ConsoleSize& GetConsoleSize(HANDLE consoleHandle) {
+    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+    ConsoleSize consoleSize = {};
+    GetConsoleScreenBufferInfo(consoleHandle, &consoleInfo);
+    SMALL_RECT srWindow = consoleInfo.srWindow;
+    consoleSize.row = srWindow.Right - srWindow.Left + 1;
+    consoleSize.column = srWindow.Bottom - srWindow.Top + 1;
+    return std::move(consoleSize);
+}
+
+void PrintConsoleSize(HANDLE consoleHandle) {
+    const ConsoleSize& size = GetConsoleSize(consoleHandle);
+    printf("Console Size: row: %d, column: %d \n", size.row, size.column);
+}
+
+void ClearScreen()
 {
+    HANDLE hConsole = outputHandle.stdOutput;
     COORD coordScreen = { 0, 0 };    // home for the cursor
     DWORD cCharsWritten;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -65,6 +91,7 @@ void ClearScreen(HANDLE hConsole)
 
     // Put the cursor at its home coordinates.
     SetConsoleCursorPosition(hConsole, coordScreen);
+    SetConsoleCursorPosition(outputHandle.bufferOutput, coordScreen);
 }
 
 void TestHalt() {
@@ -94,7 +121,7 @@ void Initial() {
     );
 
     //隐藏两个缓冲区光标
-    CONSOLE_CURSOR_INFO newConsoleCursorInfo;
+    CONSOLE_CURSOR_INFO newConsoleCursorInfo = { };
     newConsoleCursorInfo.bVisible = 0;
     newConsoleCursorInfo.dwSize = 1;
     SetConsoleCursorInfo(outputHandle.bufferOutput, &newConsoleCursorInfo);
@@ -105,16 +132,32 @@ void Initial() {
 
     // 使用这个当ActiveScreenBuffer,因为输入输出操作的都是stdOutput
     SetConsoleActiveScreenBuffer(outputHandle.bufferOutput);
-    system("pause");
 }
 
 //游戏循环
 void Loop() {
-    ClearScreen(outputHandle.stdOutput);
+    DWORD startTime = GetTickCount();
+
+    ClearScreen();
     UpdateConsoleSize();
-    printf("WindowSize: row: %d, column: %d \n", consoleSize.row, consoleSize.column);
+
+    PrintConsoleSize(outputHandle.bufferOutput);
+    PrintConsoleSize(outputHandle.stdOutput);
+    
     RefreshFrame();
-    system("pause");
+
+    DWORD endTime = GetTickCount();
+    DWORD deltaTime = endTime - startTime;
+
+    // 显示fps
+    wchar_t fpsDisplayStr[1024] = {};
+    wsprintf(fpsDisplayStr,L"FPS: %.2f",1);
+    SetConsoleTitle(fpsDisplayStr);
+
+    // 锁定刷新率60fps
+    if (deltaTime < 1000 / 60) {
+        Sleep(1000 / 60 - deltaTime);
+    }
 }
 
 
