@@ -65,14 +65,13 @@ public:
             Halt();
         }
 
-        if (consoleSize.row == 0) {
-            return;
-        }
-
         rect.Left = 0;
         rect.Top = 0;
-        rect.Right = consoleSize.row - 1;
-        rect.Bottom = consoleSize.column - 1;
+        
+        if ((consoleSize.row - 1) < 1 || (consoleSize.column - 1) < 1)return;
+
+        rect.Right = (consoleSize.row - 1);
+        rect.Bottom = (consoleSize.column - 1);
 
         SetConsoleWindowInfo(bufferHandle, TRUE, &rect);
 
