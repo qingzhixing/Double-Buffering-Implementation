@@ -2,6 +2,7 @@
 #include <iostream>
 #include <Windows.h>
 #include "debug.h"
+#include <stdexcept>
 
 class ConsoleDisplayController
 {
@@ -24,13 +25,6 @@ public:
             CONSOLE_TEXTMODE_BUFFER,    //缓冲区类型:控制台文本模式缓冲
             NULL    //保留
         );
-
-        //隐藏两个缓冲区光标
-        CONSOLE_CURSOR_INFO newConsoleCursorInfo = { };
-        newConsoleCursorInfo.bVisible = 0;
-        newConsoleCursorInfo.dwSize = 1;
-        SetConsoleCursorInfo(bufferOutput, &newConsoleCursorInfo);
-        SetConsoleCursorInfo(stdOutput, &newConsoleCursorInfo);
     
         UpdateConsoleSize();
 
@@ -41,23 +35,50 @@ public:
     }
 
 public:
+    void HideConsoleCursor(HANDLE bufferHandle) {
+        CONSOLE_CURSOR_INFO newConsoleCursorInfo = { };
+        newConsoleCursorInfo.bVisible = 0;
+        newConsoleCursorInfo.dwSize = 1;
+        SetConsoleCursorInfo(bufferHandle, &newConsoleCursorInfo);
+
+    }
     void UpdateConsoleSize() {
+
         CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
         GetConsoleScreenBufferInfo(bufferOutput, &consoleInfo);
         SMALL_RECT srWindow = consoleInfo.srWindow;
         consoleSize.row = srWindow.Right - srWindow.Left + 1;
         consoleSize.column = srWindow.Bottom - srWindow.Top + 1;
 
-        //TODO:同步控制台属性
-        /*PCONSOLE_SCREEN_BUFFER_INFOEX exInfo=new CONSOLE_SCREEN_BUFFER_INFOEX({});
-        if (!GetConsoleScreenBufferInfoEx(console.bufferOutput, exInfo)) {
-            std::cout << GetLastError() << std::endl;
+        //同步ConsoleScreenBuffer大小
+        SetConsoleSize(stdOutput, consoleSize);
+        SetConsoleSize(bufferOutput, consoleSize);
+    }
+
+    void SetConsoleSize(HANDLE bufferHandle,ConsoleSize consoleSize)
+    {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        SMALL_RECT rect;
+        COORD      coord;
+        if (!GetConsoleScreenBufferInfo(bufferHandle, &csbi)) {
+            printf("Cannot GetConsoleScreenBufferInfo\n");
+            Halt();
         }
-        printf("exInfo: srWindow.Top: %d\n", exInfo->srWindow.Top);
-        if (!SetConsoleScreenBufferInfoEx(console.stdOutput, exInfo)) {
-            std::cout << GetLastError() << std::endl;
-        }*/
-        SetConsoleScreenBufferSize(stdOutput, consoleSize);
+
+        if (consoleSize.row == 0) {
+            return;
+        }
+
+        rect.Left = 0;
+        rect.Top = 0;
+        rect.Right = consoleSize.row - 1;
+        rect.Bottom = consoleSize.column - 1;
+
+        SetConsoleWindowInfo(bufferHandle, TRUE, &rect);
+
+        coord.X = consoleSize.row;
+        coord.Y = consoleSize.column;
+        SetConsoleScreenBufferSize(bufferHandle, coord);
     }
 
     const ConsoleSize& GetConsoleSize(HANDLE consoleHandle) {
@@ -127,6 +148,10 @@ public:
         DWORD bits(0);
         ReadConsoleOutputCharacter(stdOutput, buf, screenCharAmount, COORD({ 0,0 }), &bits);
         WriteConsoleOutputCharacter(bufferOutput, buf, screenCharAmount, COORD({ 0,0 }), &bits);
+
+        //设置光标隐藏，防止光标残留
+        HideConsoleCursor(stdOutput);
+        HideConsoleCursor(bufferOutput);
     }
 
 public:
