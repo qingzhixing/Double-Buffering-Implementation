@@ -149,15 +149,19 @@ void Loop() {
     DWORD endTime = GetTickCount();
     DWORD deltaTime = endTime - startTime;
 
-    // 显示fps
-    wchar_t fpsDisplayStr[1024] = {};
-    wsprintf(fpsDisplayStr,L"FPS: %.2f",1);
-    SetConsoleTitle(fpsDisplayStr);
-
     // 锁定刷新率60fps
     if (deltaTime < 1000 / 60) {
         Sleep(1000 / 60 - deltaTime);
+        printf("Sleeped\n");
     }
+
+    endTime = GetTickCount();
+    deltaTime = endTime - startTime;
+
+    // 显示fps
+    wchar_t fpsDisplayStr[120] = {};
+    swprintf(fpsDisplayStr, 100, L"FPS: %.2f", 1 / float(deltaTime) * 1000);
+    SetConsoleTitle(fpsDisplayStr);
 }
 
 
