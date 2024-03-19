@@ -130,6 +130,7 @@
     <ClCompile Include="Simple RPG.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ConsoleDisplayController.h" />
     <ClInclude Include="debug.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
