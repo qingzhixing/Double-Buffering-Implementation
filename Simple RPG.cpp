@@ -6,17 +6,25 @@ static ConsoleDisplayController console;
 // 初始化
 void Initialize() {
     console.ConsoleInitialize();
+    console.onConsoleSizeChanged = []()->void {
+        printf("OnConsoleSizeChanged\n");
+        };
+}
+
+void Draw() {
+    console.ClearScreen();
+
+    console.PrintConsoleSize(console.bufferOutput);
+    console.PrintConsoleSize(console.stdOutput);
 }
 
 //游戏循环
 void Loop() {
     DWORD startTime = GetTickCount();
 
-    console.ClearScreen();
-    console.UpdateConsoleSize();
+    console.UpdateScreenBufferSize();
 
-    console.PrintConsoleSize(console.bufferOutput);
-    console.PrintConsoleSize(console.stdOutput);
+    Draw();
     
     console.RefreshFrame();
 
@@ -26,7 +34,6 @@ void Loop() {
     // 锁定刷新率60fps
     if (deltaTime < 1000 / 60) {
         Sleep(1000 / 60 - deltaTime);
-        printf("Sleeped\n");
     }
 
     endTime = GetTickCount();

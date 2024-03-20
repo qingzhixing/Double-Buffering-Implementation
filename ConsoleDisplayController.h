@@ -25,8 +25,20 @@ public:
             CONSOLE_TEXTMODE_BUFFER,    //缓冲区类型:控制台文本模式缓冲
             NULL    //保留
         );
-    
-        UpdateConsoleSize();
+
+        mainWindow = GetForegroundWindow();
+
+        //设置全屏
+        LONG l_WinStyle = GetWindowLong(mainWindow, GWL_STYLE);   /* 获取窗口信息 */
+        SetWindowLong(mainWindow, GWL_STYLE, (l_WinStyle | WS_MAXIMIZE)/* & ~WS_THICKFRAME*/);
+
+        // TODO: 缓冲区同步改变
+        int cx = GetSystemMetrics(SM_CXSCREEN);            /* 屏幕宽度 像素 */
+        int cy = GetSystemMetrics(SM_CYSCREEN);            /* 屏幕高度 像素 */
+        SetWindowPos(mainWindow, HWND_TOP, 50, 50, cx, cy, 0);
+
+        //更新Buffer
+        UpdateScreenBufferSize();
 
         Debug(PrintConsoleSize(bufferOutput));
 
@@ -42,13 +54,22 @@ public:
         SetConsoleCursorInfo(bufferHandle, &newConsoleCursorInfo);
 
     }
-    void UpdateConsoleSize() {
+
+    void UpdateScreenBufferSize() {
 
         CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
         GetConsoleScreenBufferInfo(bufferOutput, &consoleInfo);
         SMALL_RECT srWindow = consoleInfo.srWindow;
-        consoleSize.row = srWindow.Right - srWindow.Left + 1;
-        consoleSize.column = srWindow.Bottom - srWindow.Top + 1;
+        SHORT newRow, newColumn;
+        newRow = srWindow.Right - srWindow.Left + 1;
+        newColumn = srWindow.Bottom - srWindow.Top + 1;
+
+        if (newRow != consoleSize.row || newColumn != consoleSize.column) {
+            onConsoleSizeChanged();
+        }
+
+        consoleSize.row = newRow;
+        consoleSize.column = newColumn;
 
         //同步ConsoleScreenBuffer大小
         SetConsoleSize(stdOutput, consoleSize);
@@ -68,7 +89,11 @@ public:
         rect.Left = 0;
         rect.Top = 0;
         
-        if ((consoleSize.row - 1) < 1 || (consoleSize.column - 1) < 1)return;
+        // 防止垂直高度过小导致闪退(超过类型范围)
+        if ((consoleSize.column - 1) < 3) { 
+            Debug(printf("False: !(consoleSize.column - 1) < 3)\n"));
+            return; 
+        }
 
         rect.Right = (consoleSize.row - 1);
         rect.Bottom = (consoleSize.column - 1);
@@ -157,4 +182,6 @@ public:
 	HANDLE stdOutput;
 	HANDLE bufferOutput;
     ConsoleSize consoleSize;
+    void (*onConsoleSizeChanged)() = []()->void{};
+    HWND mainWindow;
 };
