@@ -15,11 +15,12 @@ void Initialize() {
 }
 
 //游戏循环
-void GameLoop() {
+void Frame() {
 	DWORD startTime = GetTickCount();
 
 	console.UpdateScreenBufferSize();
 
+	game.Update();
 	game.Draw();
 
 	console.RefreshFrame();
@@ -46,6 +47,6 @@ int main()
 	std::cout << "Hello World!\n";
 	Initialize();
 	while (true) {
-		GameLoop();
+		Frame();
 	}
 }
