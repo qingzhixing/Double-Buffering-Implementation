@@ -1,56 +1,51 @@
 ﻿#include <iostream>
 #include <Windows.h>
 #include"ConsoleDisplayController.h"
+#include "GameController.h"
 
-static ConsoleDisplayController console;
+ConsoleDisplayController console = ConsoleDisplayController();
+GameController game;
+
 // 初始化
 void Initialize() {
-    console.ConsoleInitialize();
-    console.onConsoleSizeChanged = []()->void {
-        printf("OnConsoleSizeChanged\n");
-        };
-}
-
-void Draw() {
-    console.ClearScreen();
-
-    console.PrintConsoleSize(console.bufferOutput);
-    console.PrintConsoleSize(console.stdOutput);
+	console.ConsoleInitialize();
+	console.onConsoleSizeChanged = []()->void {
+		printf("OnConsoleSizeChanged\n");
+		};
 }
 
 //游戏循环
-void Loop() {
-    DWORD startTime = GetTickCount();
+void GameLoop() {
+	DWORD startTime = GetTickCount();
 
-    console.UpdateScreenBufferSize();
+	console.UpdateScreenBufferSize();
 
-    Draw();
-    
-    console.RefreshFrame();
+	game.Draw();
 
-    DWORD endTime = GetTickCount();
-    DWORD deltaTime = endTime - startTime;
+	console.RefreshFrame();
 
-    // 锁定刷新率60fps
-    if (deltaTime < 1000 / 60) {
-        Sleep(1000 / 60 - deltaTime);
-    }
+	DWORD endTime = GetTickCount();
+	DWORD deltaTime = endTime - startTime;
 
-    endTime = GetTickCount();
-    deltaTime = endTime - startTime;
+	// 锁定刷新率60fps
+	if (deltaTime < 1000 / 60) {
+		Sleep(1000 / 60 - deltaTime);
+	}
 
-    // 显示fps
-    wchar_t fpsDisplayStr[120] = {};
-    swprintf(fpsDisplayStr, 100, L"FPS: %.2f", 1 / float(deltaTime) * 1000);
-    SetConsoleTitle(fpsDisplayStr);
+	endTime = GetTickCount();
+	deltaTime = endTime - startTime;
+
+	// 显示fps
+	wchar_t fpsDisplayStr[120] = {};
+	swprintf(fpsDisplayStr, 100, L"FPS: %.2f", 1 / float(deltaTime) * 1000);
+	SetConsoleTitle(fpsDisplayStr);
 }
-
 
 int main()
 {
-    std::cout << "Hello World!\n";
-    Initialize();
-    while (true) {
-        Loop();
-    }
+	std::cout << "Hello World!\n";
+	Initialize();
+	while (true) {
+		GameLoop();
+	}
 }

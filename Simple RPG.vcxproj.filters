@@ -18,12 +18,21 @@
     <ClCompile Include="Simple RPG.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="GameController.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ConsoleDisplayController.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="debug.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ConsoleDisplayController.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GameController.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
