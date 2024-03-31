@@ -1,1 +1,3 @@
-# Simple RPG
+# Double Buffering Implementation
+
+原本的初衷是做一个简单的文字类RPG,结果实现了双缓冲之后越来越复杂,打算就把这个项目当作双缓冲的实现项目吧
